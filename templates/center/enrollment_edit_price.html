@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h3 class="fw-bold mb-3 text-primary">✏️ تعديل سعر الحصة للطالب</h3>
+            <p class="text-muted">الطالب: <strong>{{ enrollment.student.name }}</strong> | المجموعة: <strong>{{ enrollment.group.name }}</strong></p>
+            <p class="small text-secondary">السعر الافتراضي للمجموعة: {{ enrollment.group.session_price }} ج.م</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">السعر الخاص (اتركه فارغاً للعودة للسعر الافتراضي):</label>
+                    <input type="number" step="0.01" name="custom_price" class="form-control" value="{{ enrollment.custom_price|default:'' }}" placeholder="{{ enrollment.group.session_price }}">
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'center:student_detail' enrollment.student.id %}" class="btn btn-secondary">إلغاء</a>
+                    <button type="submit" class="btn btn-primary">حفظ السعر الجديد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">👥 المجموعات الدراسية</h2>
+    <a href="{% url 'center:group_add' %}" class="btn btn-primary">+ إضافة مجموعة جديدة</a>
+</div>
+
+<!-- Search & Filter Form -->
+<form method="get" class="row g-2 mb-4" id="groupSearchForm">
+    <div class="col-md-6">
+        <input type="text" name="q" id="searchInput" class="form-control" placeholder="🔍 ابحث باسم المجموعة، المادة، أو المعلم..." value="{{ query }}">
+    </div>
+    <div class="col-md-4">
+        <select name="grade" id="gradeSelect" class="form-select">
+            <option value="">-- كل الصفوف الدراسية --</option>
+            {% for g in grades %}
+                <option value="{{ g.id }}" {% if grade_id == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">بحث وتصفية</button>
+    </div>
+    <input type="hidden" name="sort" value="{{ sort_by }}">
+</form>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const gradeSelect = document.getElementById('gradeSelect');
+    const groupSearchForm = document.getElementById('groupSearchForm');
+
+    let debounceTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            groupSearchForm.submit();
+        }, 400);
+    });
+
+    gradeSelect.addEventListener('change', function() {
+        groupSearchForm.submit();
+    });
+</script>
+
+<!-- Fixed Container with Scrolling & Pagination -->
+<div class="card p-3">
+    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>
+                        <a href="?q={{ query }}&grade={{ grade_id }}&sort={% if sort_by == 'name' %}-name{% else %}name{% endif %}" class="text-dark text-decoration-none fw-bold">
+                            اسم المجموعة {% if sort_by == 'name' %}▲{% elif sort_by == '-name' %}▼{% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?q={{ query }}&grade={{ grade_id }}&sort={% if sort_by == 'subject' %}-subject{% else %}subject{% endif %}" class="text-dark text-decoration-none fw-bold">
+                            المادة {% if sort_by == 'subject' %}▲{% elif sort_by == '-subject' %}▼{% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?q={{ query }}&grade={{ grade_id }}&sort={% if sort_by == 'teacher' %}-teacher{% else %}teacher{% endif %}" class="text-dark text-decoration-none fw-bold">
+                            المعلم {% if sort_by == 'teacher' %}▲{% elif sort_by == '-teacher' %}▼{% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?q={{ query }}&grade={{ grade_id }}&sort={% if sort_by == 'grade' %}-grade{% else %}grade{% endif %}" class="text-dark text-decoration-none fw-bold">
+                            الصف {% if sort_by == 'grade' %}▲{% elif sort_by == '-grade' %}▼{% endif %}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?q={{ query }}&grade={{ grade_id }}&sort={% if sort_by == 'day' %}-day{% else %}day{% endif %}" class="text-dark text-decoration-none fw-bold">
+                            موعد الحصة الأسبوعي {% if sort_by == 'day' %}▲{% elif sort_by == '-day' %}▼{% endif %}
+                        </a>
+                    </th>
+                    <th>سعر الحصة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in page_obj %}
+                <tr>
+                    <td><strong>{{ g.name }}</strong></td>
+                    <td>{{ g.subject.name }}</td>
+                    <td>{{ g.teacher.name }}</td>
+                    <td>{{ g.grade.name }}</td>
+                    <td>
+                        <span class="badge bg-info text-dark">
+                            {% if g.day_of_week == 5 %}السبت
+                            {% elif g.day_of_week == 6 %}الأحد
+                            {% elif g.day_of_week == 0 %}الإثنين
+                            {% elif g.day_of_week == 1 %}الثلاثاء
+                            {% elif g.day_of_week == 2 %}الأربعاء
+                            {% elif g.day_of_week == 3 %}الخميس
+                            {% elif g.day_of_week == 4 %}الجمعة
+                            {% endif %}
+                            - {{ g.time|time:"h:i A" }}
+                        </span>
+                    </td>
+                    <td>{{ g.session_price }} ج.م</td>
+                    <td>
+                        <a href="{% url 'center:group_detail' g.id %}" class="btn btn-sm btn-info text-white">📁 الملف والطلاب</a>
+                        <a href="{% url 'center:group_edit' g.id %}" class="btn btn-sm btn-outline-warning">تعديل</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">لا توجد مجموعات مطابقة للبحث أو التصفية.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?q={{ query }}&grade={{ grade_id }}&sort={{ sort_by }}&page={{ page_obj.previous_page_number }}">السابق</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?q={{ query }}&grade={{ grade_id }}&sort={{ sort_by }}&page={{ page_obj.next_page_number }}">التالي</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">🏆 لوحة الشرف والنقاط التحفيزية للطلاب</h2>
+    <button onclick="window.print()" class="btn btn-outline-secondary d-print-none">🖨️ طباعة لوحة الشرف</button>
+</div>
+
+<div class="card p-4">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>المركز</th>
+                <th>كود الطالب</th>
+                <th>اسم الطالب</th>
+                <th>الصف الدراسي</th>
+                <th>مجموع النقاط</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>
+                    {% if forloop.counter == 1 %}🥇 الأول
+                    {% elif forloop.counter == 2 %}🥈 الثاني
+                    {% elif forloop.counter == 3 %}🥉 الثالث
+                    {% else %}{{ forloop.counter }}
+                    {% endif %}
+                </td>
+                <td><span class="badge bg-secondary">{{ student.code }}</span></td>
+                <td><strong>{{ student.name }}</strong></td>
+                <td>{{ student.grade }}</td>
+                <td><span class="badge bg-warning text-dark fs-6">⭐ {{ student.total_points }} نقطة</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">لا توجد بيانات كافية.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">ملف الطالب: {{ student.name }} <span class="badge bg-secondary fs-5">{{ student.code }}</span></h2>
+    <div>
+        <a href="{% url 'center:student_edit' student.id %}" class="btn btn-warning">✏️ تعديل وتأكيد الحذف</a>
+        <a href="{% url 'center:student_list' %}" class="btn btn-secondary">← العودة للطلاب</a>
+    </div>
+</div>
+
+<div class="row mb-4 g-4">
+    <div class="col-md-5">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary">👤 البيانات الشخصية</h5>
+            <p class="mb-2"><strong>كود الطالب (أرقام):</strong> <span class="badge bg-info text-dark fs-6">{{ student.code }}</span></p>
+            <p class="mb-2"><strong>الصف الدراسي:</strong> {{ student.grade }}</p>
+            <p class="mb-2"><strong>هاتف الطالب:</strong> {{ student.phone|default:"غير متوفر" }}</p>
+            <p class="mb-2"><strong>هاتف ولي الأمر:</strong> {{ student.guardian_phone|default:"غير متوفر" }}</p>
+            <p class="mb-0"><strong>إجمالي الديون المستحقة:</strong> <span class="text-danger fw-bold fs-6">{{ student.total_debt|floatformat:2 }} ج.م</span></p>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary">➕ إلحاق الطالب بمجموعة</h5>
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small text-muted">المجموعة:</label>
+                        <select name="group" id="groupSelect" class="form-select" required>
+                            <option value="" selected disabled>-- اختر المجموعة --</option>
+                            {% for g in available_groups %}
+                                <option value="{{ g.id }}" data-price="{{ g.session_price }}">{{ g.name }} ({{ g.subject.name }} - {{ g.session_price }} ج.م)</option>
+                            {% empty %}
+                                <option value="" disabled>الطالب مسجل في جميع مجموعات صفه بالفعل</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label small text-muted">سعر الحصة (قابل للتعديل):</label>
+                        <input type="number" step="0.01" name="custom_price" id="customPriceInput" class="form-control" placeholder="اختر مجموعة أولاً">
+                    </div>
+                    <div class="col-md-2 mt-4">
+                        <button type="submit" name="add_to_group" class="btn btn-success w-100">إضافة</button>
+                    </div>
+                </div>
+            </form>
+
+            <script>
+                document.getElementById('groupSelect').addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const defaultPrice = selectedOption.getAttribute('data-price');
+                    const priceInput = document.getElementById('customPriceInput');
+                    
+                    if (defaultPrice) {
+                        priceInput.value = defaultPrice; // كتابة السعر الافتراضي تلقائياً في خانة السعر وقابل للتعديل
+                    } else {
+                        priceInput.value = '';
+                    }
+                });
+            </script>
+
+            <h6 class="fw-bold text-secondary mb-2">المجموعات المسجل بها حالياً:</h6>
+            <ul class="list-group">
+                {% for enr in enrollments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong><a href="{% url 'center:group_detail' enr.group.id %}">{{ enr.group.name }}</a></strong>
+                        <span class="badge bg-light text-dark border ms-2">{{ enr.group.subject.name }} - السعر: {{ enr.get_price }} ج.م</span>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <!-- زر تعديل السعر الخاص -->
+                        <a href="{% url 'center:enrollment_edit_price' enr.id %}" class="btn btn-sm btn-outline-warning py-0 px-2">تعديل السعر</a>
+                        <!-- زر إزالة من المجموعة -->
+                        <a href="{% url 'center:enrollment_delete' enr.id %}" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="return confirm('هل أنت متأكد من إزالة الطالب من هذه المجموعة؟');">إزالة</a>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted text-center">غير مسجل في أي مجموعة حالياً.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4">
+    <h4 class="fw-bold mb-3 border-bottom pb-2 text-primary">📅 سجل الحضور والغياب</h4>
+    <div class="scrollable-attendance-box">
+        <table class="table table-striped align-middle mb-0">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>تاريخ الحصة</th>
+                    <th>المجموعة</th>
+                    <th>حالة الحضور</th>
+                    <th>هل تم الدفع؟</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for att in attendances %}
+                <tr>
+                    <td>{{ att.session.date }}</td>
+                    <td><a href="{% url 'center:group_detail' att.session.group.id %}">{{ att.session.group.name }}</a></td>
+                    <td>
+                        {% if att.status == 'present' %}<span class="badge bg-success">حاضر</span>
+                        {% elif att.status == 'absent' %}<span class="badge bg-danger">غائب</span>
+                        {% else %}<span class="badge bg-warning text-dark">متأخر</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if att.is_paid %}
+                            <span class="badge bg-success">تم الدفع</span>
+                        {% else %}
+                            <span class="badge bg-danger">غير مدفوع</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">لا توجد سجلات حضور مسجلة لهذا الطالب بعد.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

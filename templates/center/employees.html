@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- قائمة الموظفين المسجلين -->
+        <div class="col-md-7">
+            <div class="card shadow-sm p-4">
+                <h4 class="fw-bold text-primary mb-3">📋 قائمة الموظفين المسجلين</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>اسم المستخدم</th>
+                                <th>الاسم الكامل</th>
+                                <th>الصلاحية والصفة</th>
+                                <th class="text-center">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td><strong>{{ emp.username }}</strong></td>
+                                <td>{{ emp.first_name|default:"-" }}</td>
+                                <td>
+                                    {% if emp.is_superuser %}
+                                        <span class="badge bg-danger">المالك (Superuser)</span>
+                                    {% elif emp.is_staff %}
+                                        <span class="badge bg-success">موظف إداري (Staff)</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">مستخدم عادي</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'center:employee_edit' emp.id %}" class="btn btn-sm btn-primary mb-1">✏️ تعديل</a>
+                                    {% if emp != request.user %}
+                                        <a href="{% url 'center:employee_delete' emp.id %}" class="btn btn-sm btn-outline-danger mb-1" onclick="return confirm('هل أنت متأكد من حذف هذا المستخدم؟');">🗑️ حذف</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- إضافة موظف جديد -->
+        <div class="col-md-5">
+            <div class="card shadow-sm p-4">
+                <h4 class="fw-bold text-success mb-3">➕ إضافة موظف جديد</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_employee" value="1">
+                    <div class="mb-3">
+                        <label class="form-label small">اسم المستخدم (للتسجيل)</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">اسم الموظف / العضو الكامل</label>
+                        <input type="text" name="full_name" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">كلمة المرور</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_staff" class="form-check-input" id="staffCheck">
+                        <label class="form-check-label small fw-bold" for="staffCheck">منح صلاحيات الإدارة (Staff)</label>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">💾 حفظ وإنشاء الحساب</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

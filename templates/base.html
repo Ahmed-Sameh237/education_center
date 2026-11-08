@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المركز التعليمي</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --primary-blue: #2563eb;
+            --body-bg: #f1f5f9;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--body-bg);
+            color: #1e293b;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: #fff;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar-brand {
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: #fff;
+            padding: 1rem 0.5rem;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 1.5rem;
+        }
+        .sidebar a.nav-link-custom {
+            color: #94a3b8;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .sidebar a.nav-link-custom:hover {
+            color: #fff;
+            background-color: var(--sidebar-hover);
+        }
+        .sidebar a.nav-link-custom.active {
+            color: #fff;
+            background-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            background-color: #ffffff;
+        }
+        .form-label {
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 0.4rem;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.65rem 0.9rem;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .btn {
+            border-radius: 8px;
+            padding: 0.55rem 1.2rem;
+            font-weight: 600;
+        }
+        .scrollable-attendance-box {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 250px; min-height: 100vh;">
+                <a href="{% url 'center:dashboard' %}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                    <span class="fs-4 fw-bold">🏫 المركز التعليمي</span>
+                </a>
+                <hr>
+                <ul class="nav nav-pills flex-column mb-auto">
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:dashboard' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            📊 لوحة التحكم
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:student_list' %}" class="nav-link text-white {% if 'student' in request.resolver_match.url_name %}active{% endif %}">
+                            🎓 الطلاب والديون
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:group_list' %}" class="nav-link text-white {% if 'group' in request.resolver_match.url_name %}active{% endif %}">
+                            👥 المجموعات
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:session_list' %}" class="nav-link text-white {% if 'session' in request.resolver_match.url_name %}active{% endif %}">
+                            📅 الحصص والجلسات
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:teacher_list' %}" class="nav-link text-white {% if 'teacher' in request.resolver_match.url_name %}active{% endif %}">
+                            👨‍🏫 المعلمون
+                        </a>
+                    </li>
+                    {% if request.user.is_superuser %}
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:center_account' %}" class="nav-link text-white {% if 'center_account' in request.resolver_match.url_name %}active{% endif %}">
+                            💰 حساب المركز
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- يظهر تبويب إدارة الموظفين والنسخ الاحتياطي للمدير (superuser) فقط -->
+                    {% if request.user.is_superuser %}
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:employee_list' %}" class="nav-link text-white {% if 'employee' in request.resolver_match.url_name %}active{% endif %}">
+                            👥 إدارة الموظفين
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <a href="{% url 'center:backup_restore' %}" class="nav-link text-white {% if 'backup' in request.resolver_match.url_name %}active{% endif %}">
+                            🛡️ النسخ الاحتياطي
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <hr>
+                <div class="mt-auto">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger w-100">🚪 تسجيل الخروج</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-10 p-4">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

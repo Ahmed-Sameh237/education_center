@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">💰 حساب المركز والأرباح والتقارير المالية</h2>
+</div>
+
+<!-- البطاقات العلوية الإجمالية الكلية -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white p-3 shadow-sm text-center">
+            <div class="small opacity-75">إجمالي التحصيلات الكلية</div>
+            <h3 class="fw-bold mb-0">{{ total_collections_all }} ج.م</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white p-3 shadow-sm text-center">
+            <div class="small opacity-75">أرباح المركز الصافية (Center Cuts)</div>
+            <h3 class="fw-bold mb-0">{{ total_center_cuts_all }} ج.م</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark p-3 shadow-sm text-center">
+            <div class="small fw-bold opacity-75">إجمالي ما تم صرفه للمعلمين</div>
+            <h3 class="fw-bold mb-0">{{ total_payouts_all }} ج.م</h3>
+        </div>
+    </div>
+</div>
+
+<!-- 1. تقرير مخصص (من تاريخ إلى تاريخ) -->
+<div class="card p-3 shadow-sm mb-4">
+    <h4 class="fw-bold text-primary mb-3">📅 تقرير مخصص (من تاريخ إلى تاريخ)</h4>
+    <form method="get" class="row g-3 align-items-end mb-3">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">من تاريخ:</label>
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">إلى تاريخ:</label>
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">عرض التقرير بالفترة</button>
+        </div>
+    </form>
+
+    {% if has_custom_filter %}
+    <div class="row text-center g-3 bg-light p-3 rounded">
+        <div class="col-md-4 border-end">
+            <span class="text-muted small">تحصيلات الفترة</span>
+            <h4 class="fw-bold text-primary mb-0">{{ custom_collections }} ج.م</h4>
+        </div>
+        <div class="col-md-4 border-end">
+            <span class="text-muted small">أرباح المركز للفترة</span>
+            <h4 class="fw-bold text-success mb-0">{{ custom_center_cuts }} ج.م</h4>
+        </div>
+        <div class="col-md-4">
+            <span class="text-muted small">المنصرف للمعلمين للفترة</span>
+            <h4 class="fw-bold text-warning mb-0">{{ custom_payouts }} ج.م</h4>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 2. التقرير الشهري المخصص (اختر الشهر والسنة) -->
+<div class="card p-3 shadow-sm">
+    <h4 class="fw-bold text-secondary mb-3">📊 تقرير الدخل والربح الشهري المخصص</h4>
+    <form method="get" class="row g-3 align-items-end mb-4">
+        <div class="col-md-5">
+            <label class="form-label small fw-bold">اختر الشهر:</label>
+            <select name="month" class="form-select">
+                <option value="1" {% if selected_month == '1' %}selected{% endif %}>يناير</option>
+                <option value="2" {% if selected_month == '2' %}selected{% endif %}>فبراير</option>
+                <option value="3" {% if selected_month == '3' %}selected{% endif %}>مارس</option>
+                <option value="4" {% if selected_month == '4' %}selected{% endif %}>إبريل</option>
+                <option value="5" {% if selected_month == '5' %}selected{% endif %}>مايو</option>
+                <option value="6" {% if selected_month == '6' %}selected{% endif %}>يونيو</option>
+                <option value="7" {% if selected_month == '7' %}selected{% endif %}>يوليو</option>
+                <option value="8" {% if selected_month == '8' %}selected{% endif %}>أغسطس</option>
+                <option value="9" {% if selected_month == '9' %}selected{% endif %}>سبتمبر</option>
+                <option value="10" {% if selected_month == '10' %}selected{% endif %}>أكتوبر</option>
+                <option value="11" {% if selected_month == '11' %}selected{% endif %}>نوفمبر</option>
+                <option value="12" {% if selected_month == '12' %}selected{% endif %}>ديسمبر</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small fw-bold">السنة:</label>
+            <input type="number" name="year" class="form-control" value="{{ selected_year }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">عرض الشهر</button>
+        </div>
+    </form>
+
+    <div class="row text-center g-3 bg-light p-3 rounded">
+        <div class="col-md-4 border-end">
+            <span class="text-muted small">إجمالي تحصيلات الشهر</span>
+            <h4 class="fw-bold text-primary mb-0">{{ monthly_collections }} ج.م</h4>
+        </div>
+        <div class="col-md-4 border-end">
+            <span class="text-muted small">أرباح المركز للشهر (Center Cuts)</span>
+            <h4 class="fw-bold text-success mb-0">{{ monthly_center_cuts }} ج.م</h4>
+        </div>
+        <div class="col-md-4">
+            <span class="text-muted small">ما تم صرفه للمعلمين في الشهر</span>
+            <h4 class="fw-bold text-warning mb-0">{{ monthly_payouts }} ج.م</h4>
+        </div>
+    </div>
+</div>
+{% endblock %}

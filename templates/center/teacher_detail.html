@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">👨‍🏫 ملف المعلم: {{ teacher.name }}</h2>
+        <p class="text-muted mb-0">الهاتف: {{ teacher.phone }} | المواد: 
+            {% for s in teacher.subjects.all %}{{ s.name }} {% endfor %}
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'center:teacher_list' %}" class="btn btn-outline-secondary">← عودة لقائمة المعلمين</a>
+    </div>
+</div>
+
+<!-- بطاقة ملخص الرصيد المالي -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-light border-primary p-3 shadow-sm">
+            <h5 class="text-muted">المبلغ المستحق على المركز (الرصيد الواجب دفعه):</h5>
+            <h2 class="fw-bold text-success mb-0">{{ balance_due }} ج.م</h2>
+        </div>
+    </div>
+    <div class="col-md-6 text-end d-flex align-items-center justify-content-end">
+        <button class="btn btn-success btn-lg px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#payoutModal">
+            💵 صرف مستحقات للمعلم
+        </button>
+    </div>
+</div>
+
+<!-- جدول تتبع الحصص السابقة والحالية ومستحقاتها -->
+<div class="card p-3 shadow-sm mb-4">
+    <h4 class="fw-bold text-primary mb-3">📊 تتبع حصص المعلم (السابقة والحالية)</h4>
+    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>المجموعة</th>
+                    <th>التاريخ</th>
+                    <th>حالة الحصة</th>
+                    <th>إجمالي التحصيل المدفوع (للطلاب والضيوف)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sessions_data %}
+                <tr>
+                    <td><strong>{{ item.session.group.name }}</strong></td>
+                    <td>{{ item.session.date }}</td>
+                    <td><span class="badge bg-secondary">{{ item.session.get_status_display }}</span></td>
+                    <td><strong class="text-success">{{ item.total_revenue }} ج.م</strong></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">لا توجد حصص سابقة أو حالية مسجلة لهذا المعلم.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- جدول عمليات الصرف السابقة -->
+<div class="card p-3 shadow-sm">
+    <h4 class="fw-bold text-secondary mb-3">📜 سجل عمليات صرف المستحقات السابقة</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>تاريخ الصرف</th>
+                    <th>المبلغ المدفوع</th>
+                    <th>ملاحظات / إيصال</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payouts %}
+                <tr>
+                    <td>{{ p.date|date:"j F Y, g:i a" }}</td>
+                    <td><strong class="text-success">{{ p.amount }} ج.م</strong></td>
+                    <td>{{ p.note|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">لا توجد عمليات صرف سابقة مسجلة.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal صرف المستحقات -->
+<div class="modal fade" id="payoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">💵 صرف مستحقات للمعلم: {{ teacher.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">المبلغ المراد صرفه (ج.م):</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" required placeholder="أدخل المبلغ...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">تاريخ الصرف:</label>
+                        <input type="date" name="date" class="form-control" value="{% now 'Y-m-d' %}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ملاحظات / رقم الإيصال:</label>
+                        <textarea name="note" class="form-control" rows="2" placeholder="ملاحظات اختيارية..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success px-4">تأكيد ودفع المبلغ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

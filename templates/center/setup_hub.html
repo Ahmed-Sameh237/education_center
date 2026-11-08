@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">⚙️ إعدادات المركز (الصفوف، القاعات، والمواد)</h2>
+        <p class="text-muted mb-0">إضافة وتعديل وحذف الكيانات الأساسية للمركز</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <h4 class="fw-bold text-primary mb-0">🎓 الصفوف الدراسية</h4>
+                <a href="{% url 'center:grade_add' %}" class="btn btn-sm btn-primary">+ إضافة صف</a>
+            </div>
+            <ul class="list-group">
+                {% for g in grades %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div><strong>{{ g.name }}</strong></div>
+                    <a href="{% url 'center:grade_delete' g.id %}" class="btn btn-sm btn-outline-danger py-0 px-2">حذف</a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted text-center">لا توجد صفوف مسجلة.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <h4 class="fw-bold text-primary mb-0">🏫 القاعات الدراسية</h4>
+                <a href="{% url 'center:room_add' %}" class="btn btn-sm btn-primary">+ إضافة قاعة</a>
+            </div>
+            <ul class="list-group">
+                {% for r in rooms %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div><strong>{{ r.name }}</strong> <span class="text-muted small">(السعة: {{ r.capacity }})</span></div>
+                    <a href="{% url 'center:room_delete' r.id %}" class="btn btn-sm btn-outline-danger py-0 px-2">حذف</a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted text-center">لا توجد قاعات مسجلة.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <h4 class="fw-bold text-primary mb-0">📖 المواد الدراسية</h4>
+                <a href="{% url 'center:subject_add' %}" class="btn btn-sm btn-primary">+ إضافة مادة</a>
+            </div>
+            <ul class="list-group">
+                {% for sub in subjects %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <strong>{{ sub.name }}</strong>
+                    <a href="{% url 'center:subject_delete' sub.id %}" class="btn btn-sm btn-outline-danger py-0 px-2">حذف</a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted text-center">لا توجد مواد مسجلة.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

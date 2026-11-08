@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="fw-bold mb-4">📁 استيراد بيانات الطلاب من ملف Excel القديم</h2>
+
+{% if message %}
+<div class="alert alert-info">{{ message }}</div>
+{% endif %}
+
+<div class="card p-4">
+    <p class="text-muted">تأكد أن ملف الإكسل (Excel) يحتوي على عمودين رئيسيين باسم <code>name</code> (اسم الطالب) و <code>phone</code> (رقم الهاتف).</p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="excel_file" class="form-label">اختر ملف Excel (.xlsx):</label>
+            <input type="file" name="excel_file" id="excel_file" class="form-control" accept=".xlsx, .xls" required>
+        </div>
+        <button type="submit" class="btn btn-primary">بدء الاستيراد</button>
+    </form>
+</div>
+{% endblock %}

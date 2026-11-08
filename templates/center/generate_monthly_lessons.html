@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card p-4 shadow-sm border-0">
+            <h3 class="fw-bold mb-3 text-primary text-center">⚡ إنشاء حصص شهر ({{ selected_month }}-{{ selected_year }})</h3>
+            <p class="text-muted text-center mb-4">اختر المجموعات من القائمة أدناه لإضافتها لقائمة المجموعات المستهدفة:</p>
+
+            <form method="post" id="generateForm">
+                {% csrf_token %}
+                
+                <!-- حقل اختيار المجموعة -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">اختر المجموعة:</label>
+                    <div class="input-group">
+                        <select id="groupDropdown" class="form-select">
+                            <option value="" selected disabled>-- اختر مجموعة لإضافتها --</option>
+                            {% for item in groups_data %}
+                                {% if not item.already_generated %}
+                                    <option value="{{ item.group.id }}" data-name="{{ item.group.name }} (المعلم: {{ item.group.teacher.name }} | المادة: {{ item.group.subject.name }})">
+                                        {{ item.group.name }} (المعلم: {{ item.group.teacher.name }} | المادة: {{ item.group.subject.name }})
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="button" id="addGroupBtn" class="btn btn-primary">إضافة للقائمة</button>
+                    </div>
+                    <div class="form-text text-muted">المجموعات التي أُنشئت حصصها مسبقاً لهذا الشهر مخفية تلقائياً لمنع التكرار.</div>
+                </div>
+
+                <!-- الصندوق الذي ستظهر تحته المجموعات المختارة -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">المجموعات المختارة للتوليد:</label>
+                    <div id="selectedGroupsContainer" class="border rounded p-3 bg-light" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                        <span id="noGroupsMsg" class="text-muted">لم يتم اختيار أي مجموعة بعد. استخدم القائمة في الأعلى لإضافة مجموعات.</span>
+                    </div>
+                </div>
+
+                <!-- مخزن سري يتم إرسال الـ IDs منه للـ Backend -->
+                <div id="hiddenInputsContainer"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{% url 'center:session_list' %}?year={{ selected_year }}&month={{ selected_month }}" class="btn btn-outline-secondary px-4">إلغاء</a>
+                    <button type="submit" class="btn btn-success px-5 fw-bold" id="submitBtn" disabled>توليد الحصص للمجموعات المحددة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const groupDropdown = document.getElementById('groupDropdown');
+    const addGroupBtn = document.getElementById('addGroupBtn');
+    const container = document.getElementById('selectedGroupsContainer');
+    const hiddenInputsContainer = document.getElementById('hiddenInputsContainer');
+    const noGroupsMsg = document.getElementById('noGroupsMsg');
+    const submitBtn = document.getElementById('submitBtn');
+
+    let selectedGroupIds = new Set();
+
+    addGroupBtn.addEventListener('click', function() {
+        const selectedOption = groupDropdown.options[groupDropdown.selectedIndex];
+        if (!selectedOption.value) return;
+
+        const groupId = selectedOption.value;
+        const groupName = selectedOption.getAttribute('data-name');
+
+        if (selectedGroupIds.has(groupId)) return;
+
+        selectedGroupIds.add(groupId);
+        if (noGroupsMsg) noGroupsMsg.style.display = 'none';
+
+        // إنشاء صندوق (Box / Badge) للمجموعة المختارة يظهر في الأسفل
+        const box = document.createElement('div');
+        box.className = 'd-flex justify-content-between align-items-center bg-white border rounded p-2 mb-2 shadow-sm selected-box';
+        box.setAttribute('data-id', groupId);
+        box.innerHTML = `
+            <span><strong>${groupName}</strong></span>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-btn py-0 px-2">حذف ✕</button>
+        `;
+
+        // زر الحذف من الصناديق السفلية
+        box.querySelector('.remove-btn').addEventListener('click', function() {
+            selectedGroupIds.delete(groupId);
+            box.remove();
+            removeHiddenInput(groupId);
+            // إرجاع الخيار للقائمة المنسدلة
+            selectedOption.disabled = false;
+            groupDropdown.value = "";
+            
+            if (selectedGroupIds.size === 0) {
+                if (noGroupsMsg) noGroupsMsg.style.display = 'block';
+                submitBtn.disabled = true;
+            }
+        });
+
+        container.appendChild(box);
+        addHiddenInput(groupId);
+        
+        // تعطيل الخيار من القائمة العلوية حتى لا يتم تكراره
+        selectedOption.disabled = true;
+        groupDropdown.value = "";
+        submitBtn.disabled = false;
+    });
+
+    function addHiddenInput(id) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'group_ids';
+        input.value = id;
+        input.id = `hidden_${id}`;
+        hiddenInputsContainer.appendChild(input);
+    }
+
+    function removeHiddenInput(id) {
+        const input = document.getElementById(`hidden_${id}`);
+        if (input) input.remove();
+    }
+</script>
+{% endblock %}

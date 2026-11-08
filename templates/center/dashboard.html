@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">📊 لوحة تحكم المركز التعليمي</h2>
+    <span class="badge bg-primary fs-6 p-2">📅 تاريخ اليوم: {{ today|date:"Y-m-d" }}</span>
+</div>
+
+<!-- كروت المؤشرات المالية اليومية (3 كروت بتصميم متناسق) -->
+<div class="row g-3 mb-4">
+    <!-- إجمالي التحصيلات (بدون أرباح المركز) -->
+    <div class="col-md-4">
+        <div class="card bg-primary text-white p-3 shadow-sm text-center">
+            <div class="small opacity-75">إجمالي تحصيلات اليوم (بدون المركز)</div>
+            <h3 class="fw-bold mb-0">{{ total_collections_today }} ج.م</h3>
+        </div>
+    </div>
+    
+    <!-- أرباح المركز (عدد الطلاب × قيمة حق المركز) -->
+    <div class="col-md-4">
+        <div class="card bg-success text-white p-3 shadow-sm text-center">
+            <div class="small opacity-75">أرباح المركز اليوم (Center Cuts)</div>
+            <h3 class="fw-bold mb-0">{{ center_cuts_today }} ج.م</h3>
+        </div>
+    </div>
+    
+    <!-- ديون الطلاب الحاضرين ولم يدفعوا (بلون جديد مميز للديون) -->
+    <div class="col-md-4">
+        <div class="card bg-danger text-white p-3 shadow-sm text-center">
+            <div class="small opacity-75">ديون الطلاب (حاضر ولم يدفع)</div>
+            <h3 class="fw-bold mb-0">{{ students_debt_today }} ج.م</h3>
+        </div>
+    </div>
+</div>
+
+<!-- جدول حصص اليوم -->
+<div class="card p-3 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-primary mb-0">📅 حصص اليوم ({{ today|date:"Y-m-d" }})</h4>
+        <a href="{% url 'center:session_add' %}" class="btn btn-sm btn-success">+ إضافة حصة اليوم</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>المجموعة وموعد الحصة</th>
+                    <th>المعلم</th>
+                    <th class="text-center">حالة الحصة</th>
+                    <th class="text-center">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in today_sessions %}
+                <tr>
+                    <td>
+                        <strong><a href="{% url 'center:group_detail' session.group.id %}">{{ session.group.name }}</a></strong>
+                        <div class="text-muted small mt-1">
+                            📅 {{ session.group.get_day_of_week_display }} | ⏰ {{ session.group.time|time:"g:i a" }}
+                        </div>
+                    </td>
+                    <td>{{ session.group.teacher.name }}</td>
+                    <td class="text-center">
+                        {% if session.status == 'scheduled' %}
+                            <span class="badge bg-primary">مجدولة</span>
+                        {% elif session.status == 'completed' %}
+                            <span class="badge bg-success">تمت بنجاح</span>
+                        {% elif session.status == 'canceled' %}
+                            <span class="badge bg-danger">ملغاة</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'center:session_detail' session.id %}" class="btn btn-sm btn-primary">📁 فتح ملف الحصة</a>
+                        
+                        {% if session.status != 'completed' %}
+                            <a href="{% url 'center:change_session_status' session.id 'completed' %}" class="btn btn-sm btn-success">✅ إنهاء الحصة</a>
+                        {% endif %}
+
+                        {% if session.status != 'canceled' %}
+                            <a href="{% url 'center:change_session_status' session.id 'canceled' %}" class="btn btn-sm btn-outline-danger">❌ إلغاء الحصة</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">لا توجد حصص مجدولة لهذا اليوم.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

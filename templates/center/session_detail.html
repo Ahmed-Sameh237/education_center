@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">📁 ملف الحصة: {{ group.name }}</h2>
+        <p class="text-muted mb-0">التاريخ: {{ session.date }} | الحالة: 
+            {% if session.status == 'scheduled' %}<span class="badge bg-primary">مجدولة</span>
+            {% elif session.status == 'completed' %}<span class="badge bg-success">تمت</span>
+            {% else %}<span class="badge bg-warning text-dark">معدلة</span>
+            {% endif %}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'center:session_edit' session.id %}" class="btn btn-warning">⚙️ تعديل موعد/حالة الحصة</a>
+        <a href="{% url 'center:guest_add' session.id %}" class="btn btn-success">+ إضافة ضيف</a>
+        <a href="{% url 'center:group_detail' group.id %}" class="btn btn-outline-secondary">← عودة للمجموعة</a>
+    </div>
+</div>
+
+<!-- شريط البحث والفلترة -->
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-7">
+        <input type="text" name="q" class="form-control" placeholder="🔍 ابحث بكود الطالب أو اسمه..." value="{{ query }}">
+    </div>
+    <div class="col-md-3">
+        <select name="filter" class="form-select">
+            <option value="">-- كل الطلاب --</option>
+            <option value="present" {% if attendance_filter == 'present' %}selected{% endif %}>🟢 الحاضرون فقط</option>
+            <option value="absent" {% if attendance_filter == 'absent' %}selected{% endif %}>🔴 الغائبون فقط</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">تصفية وبحث</button>
+    </div>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card p-3 shadow-sm mb-4">
+        <h4 class="fw-bold text-primary mb-3">🎓 كشف حضور الطلاب وتسجيل الدفع</h4>
+        
+        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>كود الطالب</th>
+                        <th>اسم الطالب</th>
+                        <th class="text-center">حالة الحضور</th>
+                        <th>السعر المطلوب (من ملف الطالب)</th>
+                        <th class="text-center">تم دفع الحصة؟</th>
+                        <th class="text-center">تم دفع حق المركز؟</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for att in attendances %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ att.student.code }}</span></td>
+                        <td><strong><a href="{% url 'center:student_detail' att.student.id %}">{{ att.student.name }}</a></strong></td>
+                        
+                        <!-- زر الحضور -->
+                        <td class="text-center">
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" role="switch" id="present_{{ att.student.id }}" name="present_{{ att.student.id }}" {% if att.status == 'present' %}checked{% endif %} style="width: 45px; height: 22px; cursor: pointer;">
+                                <label class="form-check-label ms-2 fw-bold {% if att.status == 'present' %}text-success{% else %}text-danger{% endif %}" for="present_{{ att.student.id }}">
+                                    {% if att.status == 'present' %}حاضر{% else %}غائب{% endif %}
+                                </label>
+                            </div>
+                        </td>
+
+                        <!-- السعر المطلوب -->
+                        <td><strong>{{ att.charged_price }} ج.م</strong></td>
+
+                        <!-- تم دفع الحصة؟ -->
+                        <td class="text-center">
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" role="switch" id="paid_{{ att.student.id }}" name="paid_{{ att.student.id }}" {% if att.is_paid %}checked{% endif %}>
+                                <label class="form-check-label small" for="paid_{{ att.student.id }}">مدفوع</label>
+                            </div>
+                        </td>
+
+                        <!-- تم دفع حق المركز؟ (الحقل الجديد) -->
+                        <td class="text-center">
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" role="switch" id="center_paid_{{ att.student.id }}" name="center_paid_{{ att.student.id }}" {% if att.is_center_paid %}checked{% endif %}>
+                                <label class="form-check-label small" for="center_paid_{{ att.student.id }}">حق المركز</label>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">لا توجد بيانات مطابقة للبحث أو التصفية.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-primary px-5 fw-bold">💾 حفظ تحديثات الحضور والدفع</button>
+        </div>
+    </div>
+</form>
+<!-- جدول الضيوف -->
+<div class="card p-3 shadow-sm mt-4">
+    <h4 class="fw-bold text-secondary mb-3">👥 الضيوف الحاضرون في هذه الحصة</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>اسم الضيف</th>
+                    <th>الهاتف</th>
+                    <th>الرسوم المطلوبة</th>
+                    <th>حالة الدفع</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in guests %}
+                <tr>
+                    <td><strong>{{ g.guest_name }}</strong></td>
+                    <td>{{ g.phone|default:"-" }}</td>
+                    <td>{{ g.charged_price }} ج.م</td>
+                    <td>
+                        {% if g.is_paid %}
+                            <span class="badge bg-success">مدفوع</span>
+                        {% else %}
+                            <span class="badge bg-danger">غير مدفوع</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">لا توجد ضيوف مسجلون في هذه الحصة حتى الآن.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.form-check-input[role="switch"][id^="present_"]').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const label = this.nextElementSibling;
+            if (this.checked) {
+                label.textContent = 'حاضر';
+                label.className = 'form-check-label ms-2 fw-bold text-success';
+            } else {
+                label.textContent = 'غائب';
+                label.className = 'form-check-label ms-2 fw-bold text-danger';
+            }
+        });
+    });
+</script>
+{% endblock %}

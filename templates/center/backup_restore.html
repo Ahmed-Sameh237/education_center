@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">🛡️ إدارة النسخ الاحتياطي واستعادة البيانات</h2>
+
+    <div class="row g-4">
+        <!-- كارت تحميل نسخة احتياطية -->
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4 h-100">
+                <h4 class="fw-bold text-primary mb-3">📥 تحميل نسخة احتياطية</h4>
+                <p class="text-muted">قم بتحميل نسخة احتياطية حالية لقاعدة بيانات المركز لحفظها على جهازك الشخصي للأمان.</p>
+                <a href="?download_backup=1" class="btn btn-primary mt-auto">تحميل ملف النسخة الاحتياطية الآن</a>
+            </div>
+        </div>
+
+        <!-- كارت استعادة البيانات -->
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4 h-100">
+                <h4 class="fw-bold text-danger mb-3">📤 استعادة قاعدة البيانات</h4>
+                <p class="text-muted">إذا واجهتك مشكلة، يمكنك رفع ملف النسخة الاحتياطية السابق لاستعادة كافة البيانات.</p>
+                <form method="post" enctype="multipart/form-data" class="mt-auto">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <input type="file" name="restore_file" class="form-control" required accept=".sqlite3,.db">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100" onclick="return confirm('تنبيه: استعادة قاعدة البيانات ستستبدل البيانات الحالية بالكامل. هل أنت متأكد؟');">استعادة البيانات فوراً</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
